@@ -1,0 +1,12 @@
+# TODO
+---
+
+detector: "yolov4"
+
+backbone:
+  name: "resnet18"
+  pretrained: True
+  remove_top: True
+
+neck:
+head:
