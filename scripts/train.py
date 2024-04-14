@@ -7,12 +7,12 @@ from fire import Fire
 from torch import nn
 from torch.utils.data import DataLoader
 
-from gans.data.coco_minitrain import build_coco_mini
+from gans.data.celeb_faces_a import build_coco_mini
 from gans.data.coco_utils import get_coco_object
 from gans.models.backbones import backbone_map
 from gans.models.yolov4 import YoloV4
 from gans.trainer import Trainer
-from gans.utils import utils
+from gans.utils import misc_utils
 
 dataset_map: Dict[str, Any] = {"CocoDetectionMiniTrain": build_coco_mini}
 
@@ -65,7 +65,7 @@ def main(base_config_path: str, model_config_path):
         model_config = yaml.safe_load(f)
 
     # Apply reproducibility seeds
-    utils.reproducibility(**base_config["reproducibility"])
+    misc_utils.reproducibility(**base_config["reproducibility"])
 
     # Set cuda parameters
     use_cuda = torch.cuda.is_available()

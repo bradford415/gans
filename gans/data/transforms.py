@@ -14,7 +14,7 @@ import torchvision.transforms as T
 import torchvision.transforms.functional as F
 
 from gans.utils.box_ops import box_xyxy_to_cxcywh
-from gans.utils.utils import interpolate
+from gans.utils.misc_utils import interpolate
 
 
 def crop(image, target, region):

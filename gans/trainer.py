@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from tqdm import tqdm
 
-from gans.utils import utils
+from gans.utils import misc_utils
 
 
 class Trainer:

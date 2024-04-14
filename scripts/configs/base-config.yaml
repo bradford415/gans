@@ -15,7 +15,7 @@ dataset_name: "CocoDetectionMiniTrain"
 dataset:
 
   # Path to the root of the dataset
-  root: "C:/Users/bsele/Documents/Datasets/coco_minitrain_25k"
+  root: "C:/Users/bsele/Documents/Datasets/celeb_faces_a"
 
 train:
   optimizer: "adamw"
