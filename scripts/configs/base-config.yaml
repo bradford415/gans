@@ -9,16 +9,24 @@ input_data: "data/input.txt"
 output_path: "output"
 
 # Name of dataset; must be one of the names in the dataset_map dict
-dataset_name: "CocoDetectionMiniTrain"
+dataset_name: "CelebFacesA"
 
 # Parameters for the dataset class
 dataset:
 
   # Path to the root of the dataset
-  root: "C:/Users/bsele/Documents/Datasets/celeb_faces_a"
+  root: "C:/Users/bsele/Documents/Datasets/celeb_faces_a_50k"
 
 train:
-  optimizer: "adamw"
+
+  # Optimizer for the training process
+  optimizer:
+    # Parameters for the Adam optimizer
+    name: "adam"
+      params:
+        beta1: 0.5
+
+
   scheduler: "step_lr"
 
   batch_size: 2

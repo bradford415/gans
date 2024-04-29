@@ -7,14 +7,14 @@ from fire import Fire
 from torch import nn
 from torch.utils.data import DataLoader
 
-from gans.data.celeb_faces_a import build_coco_mini
+from gans.data.celeb_faces_a import build_CelebFacesA
 from gans.data.coco_utils import get_coco_object
 from gans.models.backbones import backbone_map
 from gans.models.yolov4 import YoloV4
 from gans.trainer import Trainer
 from gans.utils import misc_utils
 
-dataset_map: Dict[str, Any] = {"CocoDetectionMiniTrain": build_coco_mini}
+dataset_map: Dict[str, Any] = {"CelebFAcesA": build_CelebFacesA}
 
 optimizer_map = {
     "adam": torch.optim.Adam,
@@ -23,28 +23,6 @@ optimizer_map = {
 }
 
 scheduler_map = {"step_lr": torch.optim.lr_scheduler.StepLR}
-
-
-def collate_fn(batch: list[Tuple[torch.Tensor, Dict[str, torch.Tensor]]]) -> None:
-    """Collect samples appropriately to be used at each iteration in the train loop
-
-    At each train iteration, the DataLoader returns a batch of samples.
-    E.g., for images, annotations in train_loader
-
-    Args:
-        batch: A batch of samples from the dataset. The batch is a list of
-               samples, each sample containg a tuple of (image, image_annotations).
-    """
-
-    # Convert [(image, annoations), (image, annoations), ...]
-    # to (image, image), (annotations, annotations) *example uses batch_size=2*
-    images, annotations = zip(*batch)  # images (C, H, W)
-
-    # (B, C, H, W)
-    images = torch.stack(images, dim=0)
-
-    # This is what will be returned in the main train for loop (samples, targets)
-    return images, annotations
 
 
 def main(base_config_path: str, model_config_path):
@@ -94,26 +72,13 @@ def main(base_config_path: str, model_config_path):
     dataset_train = dataset_map[base_config["dataset_name"]](
         dataset_split="train", **dataset_kwargs
     )
-    dataset_val = dataset_map[base_config["dataset_name"]](
-        dataset_split="val", **dataset_kwargs
-    )
 
     dataloader_train = DataLoader(
         dataset_train,
         num_workers=base_config["cuda"]["num_workers"],
-        collate_fn=collate_fn,
         **train_kwargs,
     )
-    dataloader_test = DataLoader(
-        dataset_val,
-        num_workers=base_config["cuda"]["num_workers"],
-        collate_fn=collate_fn,
-        **val_kwargs,
-    )
-
-    # Return the Coco object from PyCocoTools
-    coco_api = get_coco_object(dataset_train)
-
+    exit()
     # Initalize model components
     backbone = backbone_map[model_config["backbone"]["name"]](
         pretrain=model_config["backbone"]["pretrained"],

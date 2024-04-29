@@ -6,6 +6,10 @@ output/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
+
+# VSCode
+.vscode/
+
 # Distribution / packaging
 .Python
 build/

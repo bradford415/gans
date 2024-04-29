@@ -1,90 +1,61 @@
 # Dataset class for the COCO dataset
 # Mostly taken from here: https://github.com/facebookresearch/detr/blob/main/datasets/coco.py
+import glob
 from pathlib import Path
 
 import numpy as np
 import torch
-import torch.utils.data
-import torchvision
-from pycocotools import mask as coco_mask
-
-from gans.data import transforms as T
-from gans.data.coco_utils import PreprocessCoco, explore_coco
+import torchvision.transforms as T
+from PIL import Image
+from torch.utils.data import Dataset
 
 
-class CelebFacesA:    
-    """COCO Minitrain dataset. This dataset is a curated set of 25,000 train images
-    from the 2017 Train COOO dataset.
+class CelebFacesA(Dataset):    
+    """TODO.
 
     Dataset can be found here https://www.kaggle.com/datasets/jessicali9530/celeba-dataset.
     """
 
-    def __init__(self, image_folder: str, annotation_file: str, transforms: T = None):
-        """Initialize the COCO dataset class
+    def __init__(self, dataset_root: str, dataset_split: str = "train", transforms: T = None):
+        """Initialize the CelebFacesA Dataset
 
         Args:
-            image_folder: path to the images
-            annotation_file: path to the .json annotation file in coco format
+            dataset_root: Path to the dataset root
+            dataset_split: which dataset split to use; `train`, `val`, `test`
         """
-        super().__init__(root=image_folder, annFile=annotation_file)
         self._transforms = transforms
+        self._images = self._get_files(dataset_root, dataset_split)
 
-        explore_coco(self.coco)
-
-        self.prepare = PreprocessCoco()
-
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> Image:
         """Retrieve and preprocess samples from the dataset"""
 
-        # Retrieve the pil image and its annotations
-        # Annotations is a list of dicts; each dict in the list is an object in the image
-        # Each dict contains ground truth information of the object such as bbox, segementation and image_id
-        image, annotations = super().__getitem__(index)
+        _image = Image.open(self._images[index]).convert("RGB")
 
-        # Match the randomly sampled index with the image_id
-        image_id = self.ids[index]
-
-        # Preprocess the input data before passing it to the model; see PreprocessCoco() for more info
-        target = {"image_id": image_id, "annotations": annotations}
-        image, target = self.prepare(image, target)
+        # Preprocess the input data before passing it to the model
         if self._transforms is not None:
-            image, target = self._transforms(image, target)
+            image, target = self._transforms(_image)
 
-        return image, target
+        return _image
 
 
-def make_coco_transforms(dataset_split):
-    """Initialize transforms for the coco dataset
-
-    These transforms are based on torchvision transforms but are overrided in data/transforms.py
-    This allows for slight modifications in the the transform
+def _make_celebfacesa_transforms(dataset_split: str) -> T:
+    """Initialize transforms for the CelebFacesA dataset.
 
     Args:
-        dataset_split: which dataset split to use; `train` or `val`
+        dataset_split: which dataset split to use; `train`, `val`, `test`
 
     """
-
     normalize = T.Compose(
-        [T.ToTensor(), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+        [T.ToTensor(), T.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
     )
 
-    scales = [1024]
+    img_size = (64, 64)
 
     if dataset_split == "train":
         return T.Compose(
             [
-                T.RandomHorizontalFlip(),
-                T.RandomResize(scales),
-                T.RandomSizeCrop(512, 512),
-                # T.RandomSelect(
-                #     T.Compose(
-                #         [
-                #             T.RandomResize(scales),
-                #             T.RandomSizeCrop(384, 600),
-                #             T.RandomResize(scales, max_size=1333),
-                #         ]
-                #     ),
-                # ),
+                T.Resize(img_size),
+                T.CenterCrop(img_size), # this doesn't do anything if the img_size are the same
                 normalize,
             ]
         )
@@ -100,33 +71,37 @@ def make_coco_transforms(dataset_split):
     raise ValueError(f"unknown {dataset_split}")
 
 
-def build_coco_mini(
-    root: str,
-    dataset_split: str,
-):
-    """Initialize the COCO dataset class
+def _get_file_paths(dataset_root: str, split: str):
+    """TODO
+    
+    Args:
+        dataset_root: Path to the dataset root dir
+        split: `train`, `val`, or `test`
+    """
+    dataset_path = Path(dataset_root)
+
+    if split == "train":
+        images_root = dataset_path / "images"
+    
+    image_paths = glob.glob(f"{images_root}")
+    return image_paths
+
+
+def build_CelebFacesA(
+    dataset_root: str,
+    dataset_split: str = "train",
+) -> Dataset:
+    """Initializes the CelebFacesA dataset class
 
     Args:
-        root: full path to the dataset root
-        split: which dataset split to use; `train` or `val`
+        root: Full path to the dataset root
+        split: which dataset split to use; `train`, `val`, or `test`
     """
-    coco_root = Path(root)
-
-    # Set path to images and annotations
-    if dataset_split == "train":
-        images_dir = coco_root / "images" / "train2017"
-        annotation_file = coco_root / "annotations" / "instances_minitrain2017.json"
-    elif dataset_split == "val":
-        images_dir = coco_root / "images" / "val2017"
-        annotation_file = coco_root / "annotations" / "instances_val2017.json"
+    coco_root = Path(dataset_root)
 
     # Create the data augmentation transforms
-    data_transforms = make_coco_transforms(dataset_split)
+    data_transforms = _make_celebfacesa_transforms(dataset_split)
 
-    dataset = CocoDetectionMiniTrain(
-        image_folder=images_dir,
-        annotation_file=annotation_file,
-        transforms=data_transforms,
-    )
+    dataset = CelebFacesA(dataset_root=dataset_root, dataset_split=dataset_split, transforms=data_transforms)
 
     return dataset

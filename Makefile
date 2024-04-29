@@ -65,4 +65,5 @@ install_windows:
 
 create: venv install ## Create virtual environment and install dependencies and the project itself
 
+# Final command to create a new virtual env and install dependencies
 create_windows: venv install_windows
