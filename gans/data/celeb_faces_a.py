@@ -10,13 +10,15 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 
-class CelebFacesA(Dataset):    
+class CelebFacesA(Dataset):
     """TODO.
 
     Dataset can be found here https://www.kaggle.com/datasets/jessicali9530/celeba-dataset.
     """
 
-    def __init__(self, dataset_root: str, dataset_split: str = "train", transforms: T = None):
+    def __init__(
+        self, dataset_root: str, dataset_split: str = "train", transforms: T = None
+    ):
         """Initialize the CelebFacesA Dataset
 
         Args:
@@ -24,7 +26,7 @@ class CelebFacesA(Dataset):
             dataset_split: which dataset split to use; `train`, `val`, `test`
         """
         self._transforms = transforms
-        self._images = self._get_files(dataset_root, dataset_split)
+        self._images = _get_file_paths(dataset_root, dataset_split)
 
     def __getitem__(self, index) -> Image:
         """Retrieve and preprocess samples from the dataset"""
@@ -37,6 +39,10 @@ class CelebFacesA(Dataset):
 
         return _image
 
+    def __len__(self):
+        """Returns dataset length"""
+        return len(self._images)
+
 
 def _make_celebfacesa_transforms(dataset_split: str) -> T:
     """Initialize transforms for the CelebFacesA dataset.
@@ -45,9 +51,7 @@ def _make_celebfacesa_transforms(dataset_split: str) -> T:
         dataset_split: which dataset split to use; `train`, `val`, `test`
 
     """
-    normalize = T.Compose(
-        [T.ToTensor(), T.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]
-    )
+    normalize = T.Compose([T.ToTensor(), T.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
 
     img_size = (64, 64)
 
@@ -55,7 +59,9 @@ def _make_celebfacesa_transforms(dataset_split: str) -> T:
         return T.Compose(
             [
                 T.Resize(img_size),
-                T.CenterCrop(img_size), # this doesn't do anything if the img_size are the same
+                T.CenterCrop(
+                    img_size
+                ),  # this doesn't do anything if the img_size are the same
                 normalize,
             ]
         )
@@ -73,7 +79,7 @@ def _make_celebfacesa_transforms(dataset_split: str) -> T:
 
 def _get_file_paths(dataset_root: str, split: str):
     """TODO
-    
+
     Args:
         dataset_root: Path to the dataset root dir
         split: `train`, `val`, or `test`
@@ -81,8 +87,8 @@ def _get_file_paths(dataset_root: str, split: str):
     dataset_path = Path(dataset_root)
 
     if split == "train":
-        images_root = dataset_path / "images"
-    
+        images_root = dataset_path / "*"
+
     image_paths = glob.glob(f"{images_root}")
     return image_paths
 
@@ -102,6 +108,10 @@ def build_CelebFacesA(
     # Create the data augmentation transforms
     data_transforms = _make_celebfacesa_transforms(dataset_split)
 
-    dataset = CelebFacesA(dataset_root=dataset_root, dataset_split=dataset_split, transforms=data_transforms)
+    dataset = CelebFacesA(
+        dataset_root=dataset_root,
+        dataset_split=dataset_split,
+        transforms=data_transforms,
+    )
 
     return dataset

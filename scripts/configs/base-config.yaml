@@ -15,16 +15,16 @@ dataset_name: "CelebFacesA"
 dataset:
 
   # Path to the root of the dataset
-  root: "C:/Users/bsele/Documents/Datasets/celeb_faces_a_50k"
+  dataset_root: "C:/Users/bsele/Documents/datasets/celeb_faces_a_50k/50k"
+
 
 train:
 
-  # Optimizer for the training process
-  optimizer:
+  # Optimizers for the training process
+  optimizers:
     # Parameters for the Adam optimizer
-    name: "adam"
-      params:
-        beta1: 0.5
+    adam:
+      beta1: 0.5
 
 
   scheduler: "step_lr"
@@ -45,13 +45,16 @@ train:
 validation:
   batch_size: 2
 
+
+cpu:
+  # Number of CPU proccesses to use to load and proccess data; each process will call into Dataset.__getitem__
+  num_workers: 2
+
 # GPU parameters
 cuda:
 
   # List of GPU devices to use
   gpus: [0]
-
-  num_workers: 2
 
 # Logging parameters
 logging:

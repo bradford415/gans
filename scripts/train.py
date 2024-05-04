@@ -1,3 +1,4 @@
+# Usage: python scripts/train.py scripts/configs/base-config.yaml scripts/configs/dcgan/model-base.yaml
 from pathlib import Path
 from typing import Any, Dict, Iterable, Tuple
 
@@ -8,13 +9,11 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from gans.data.celeb_faces_a import build_CelebFacesA
-from gans.data.coco_utils import get_coco_object
-from gans.models.backbones import backbone_map
-from gans.models.yolov4 import YoloV4
+from gans.models.dcgan import DCGenerator
 from gans.trainer import Trainer
 from gans.utils import misc_utils
 
-dataset_map: Dict[str, Any] = {"CelebFAcesA": build_CelebFacesA}
+dataset_map: Dict[str, Any] = {"CelebFacesA": build_CelebFacesA}
 
 optimizer_map = {
     "adam": torch.optim.Adam,
@@ -24,14 +23,15 @@ optimizer_map = {
 
 scheduler_map = {"step_lr": torch.optim.lr_scheduler.StepLR}
 
+generator_map = {"dcgan_gen": DCGenerator}
 
-def main(base_config_path: str, model_config_path):
+
+def main(base_config_path: str, model_config_path: str):
     """Entrypoint for the project
 
     Args:
         base_config_path: path to the desired configuration file
         model_config_path: path to the detection model configuration file
-
     """
 
     print("Initializations...\n")
@@ -53,13 +53,12 @@ def main(base_config_path: str, model_config_path):
         "batch_size": base_config["validation"]["batch_size"],
         "shuffle": False,
     }
-
+    
     if use_cuda:
-        print(f"Using {len(base_config['gpus'])} GPU(s): ")
-        for gpu in range(len(base_config["gpus"])):
+        print(f"Using {len(base_config['cuda']['gpus'])} GPU(s): ")
+        for gpu in range(len(base_config["cuda"]["gpus"])):
             print(f"    -{torch.cuda.get_device_name(gpu)}")
         cuda_kwargs = {
-            "num_workers": base_config["cuda"]["workers"],
             "pin_memory": True,
         }
 
@@ -67,7 +66,6 @@ def main(base_config_path: str, model_config_path):
         val_kwargs.update(cuda_kwargs)
     else:
         print("Using CPU")
-
     dataset_kwargs = base_config["dataset"]
     dataset_train = dataset_map[base_config["dataset_name"]](
         dataset_split="train", **dataset_kwargs
@@ -75,12 +73,12 @@ def main(base_config_path: str, model_config_path):
 
     dataloader_train = DataLoader(
         dataset_train,
-        num_workers=base_config["cuda"]["num_workers"],
+        num_workers=base_config["cpu"]["num_workers"],
         **train_kwargs,
     )
-    exit()
+
     # Initalize model components
-    backbone = backbone_map[model_config["backbone"]["name"]](
+    generator = backbone_map[model_config["backbone"]["name"]](
         pretrain=model_config["backbone"]["pretrained"],
         remove_top=model_config["backbone"]["remove_top"],
     )
