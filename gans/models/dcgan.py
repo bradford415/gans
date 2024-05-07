@@ -47,7 +47,7 @@ class ConvTNormRelu(nn.Module):
 
 
 class DCGenerator(nn.Module):
-    """Generator for DCGAN"""
+    """Generator for Deep Convolutional GAN (DCGAN)"""
 
     def __init__(self, input_vec_ch, out_scaler: int=64, out_multiplier: list[int] = [8, 4, 2, 1], out_image_ch=3):
         """Intialize generator layers
@@ -88,3 +88,13 @@ class DCGenerator(nn.Module):
         
         return x
 
+
+class DCDiscriminator:
+    pass
+
+
+class GAN:
+    # TODO
+
+    def __init__(self, generator):
+        self.generator = generator

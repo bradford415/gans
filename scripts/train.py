@@ -78,10 +78,7 @@ def main(base_config_path: str, model_config_path: str):
     )
 
     # Initalize model components
-    generator = backbone_map[model_config["backbone"]["name"]](
-        pretrain=model_config["backbone"]["pretrained"],
-        remove_top=model_config["backbone"]["remove_top"],
-    )
+    generator = generator_map[model_config["gen_name"]](**model_config["generator"])
 
     model_components = {"backbone": backbone, "num_classes": 80}
 

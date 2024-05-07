@@ -1,9 +1,10 @@
 # Parameters for DCGAN 
 ---
 
-gan: "dcgan"
+generator_name: "dcgan"
 
 generator:
+
   # Input vector size to the generator
   input_vec: 100
 
