@@ -1,7 +1,7 @@
 # Parameters for DCGAN 
 ---
 
-generator_name: "dcgan"
+gen_name: "dcgan"
 
 generator:
 
