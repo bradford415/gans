@@ -20,6 +20,9 @@ dataset:
 
 train:
 
+  # The optimizer to use
+  optimizer_name: adam
+
   # Optimizers for the training process
   optimizers:
     # Parameters for the Adam optimizer

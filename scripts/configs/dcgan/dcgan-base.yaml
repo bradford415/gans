@@ -1,0 +1,39 @@
+# Parameters for DCGAN 
+---
+
+gen_name: "dcgan_gen"
+
+# Params for the DCGAN generator architecture
+generator:
+
+  # Input vector size to the generator
+  input_vec: 100
+
+  # Output channel scalar; this will be elementwise multiplied by output_channel_multiplier;
+  # the output channels is determined by out_channel_k*out_channel_multiplier
+  out_ch_scaler: 64
+
+  # Multiplier for each Conv layer in the generator to determine the number of output channels
+  out_ch_multiplier: [8, 4, 2, 1] 
+
+  # Number of channels in the output image; should be set to 3 for RGB images 
+  out_image_ch: 3
+
+disc_name: "dcgan_disc"
+
+# Params for the DCGAN discriminator architecture
+discriminator:
+
+  # Number of channels in the input image; 3 for RGB
+  input_image_ch: 3
+
+  # Output channel scalar; this will be elementwise multiplied by output_channel_multiplier;
+  # the output channels is determined by out_channel_k*out_channel_multiplier
+  out_ch_scaler: 64
+
+  # Multiplier for each Conv layer in the generator to determine the number of output channels
+  out_ch_multiplier: [1, 2, 4, 8] 
+
+
+
+

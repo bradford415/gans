@@ -9,7 +9,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from gans.data.celeb_faces_a import build_CelebFacesA
-from gans.models.dcgan import DCGenerator
+from gans.models.dcgan import DCGenerator, DCDiscriminator
 from gans.trainer import Trainer
 from gans.utils import misc_utils
 
@@ -24,6 +24,7 @@ optimizer_map = {
 scheduler_map = {"step_lr": torch.optim.lr_scheduler.StepLR}
 
 generator_map = {"dcgan_gen": DCGenerator}
+discriminator_map = {"dcgan_disc": DCDiscriminator}
 
 
 def main(base_config_path: str, model_config_path: str):
@@ -78,27 +79,31 @@ def main(base_config_path: str, model_config_path: str):
     )
 
     # Initalize model components
-    generator = generator_map[model_config["gen_name"]](**model_config["generator"])
+    model_generator = generator_map[model_config["gen_name"]](**model_config["generator"])
+    model_discriminator = discriminator_map[model_config["disc_name"]](**model_config["discriminator"])
+
+    model_generator = model_generator.to(device)
+    model_discriminator = model_discriminator.to(device)
 
     model_components = {"backbone": backbone, "num_classes": 80}
 
-    # model = resnet50()  # Using temp resnet50 model
-    # Initialize detection model
-    model = detectors_map[model_config["detector"]](**model_components)
-    criterion = nn.CrossEntropyLoss()
+    gen_criterion = nn.BCEWithLogitsLoss()
+    #disc_criterion = nn.B
 
     # Extract the train arguments from base config
     train_args = {**base_config["train"]}
 
     # Initialize training objects
-    optimizer, lr_scheduler = _init_training_objects(
-        model_params=model.parameters(),
-        optimizer=train_args["optimizer"],
-        scheduler=train_args["scheduler"],
+    gen_optimizer, disc_optimizer = _init_training_objects(
+        gen_params=model_generator.parameters(),
+        disc_params=model_discriminator.parameters(),
+        optimizer=train_args["optimizer_name"],
         learning_rate=train_args["learning_rate"],
         weight_decay=train_args["weight_decay"],
-        lr_drop=train_args["lr_drop"],
     )
+
+    ############## START HERE WITH RANDOM INPUT VECTOR, DECIDE WHERE TO GENERATE IT AT, MAYBE IN THE TRAINER ################################
+    input_vector = torch.randn()
 
     runner = Trainer(output_path=base_config["output_path"])
 
@@ -118,18 +123,28 @@ def main(base_config_path: str, model_config_path: str):
 
 
 def _init_training_objects(
-    model_params: Iterable,
+    gen_params: Iterable,
+    disc_params: Iterable,
     optimizer: str = "sgd",
-    scheduler: str = "step_lr",
     learning_rate: float = 1e-4,
     weight_decay: float = 1e-4,
-    lr_drop: int = 200,
 ):
-    optimizer = optimizer_map[optimizer](
-        model_params, lr=learning_rate, weight_decay=weight_decay
+    """TODO
+    
+    Args:
+
+    Returns:
+
+    """
+    gen_optimizer = optimizer_map[optimizer](
+        gen_params, lr=learning_rate, weight_decay=weight_decay
     )
-    lr_scheduler = scheduler_map[scheduler](optimizer, lr_drop)
-    return optimizer, lr_scheduler
+
+    disc_optimizer = optimizer_map[optimizer](
+        disc_params, lr=learning_rate, weight_decay=weight_decay
+    )
+
+    return gen_optimizer, disc_optimizer
 
 
 if __name__ == "__main__":
