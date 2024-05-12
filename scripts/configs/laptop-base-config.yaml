@@ -15,7 +15,7 @@ dataset_name: "CelebFacesA"
 dataset:
 
   # Path to the root of the dataset
-  dataset_root: "C:/Users/bsele/Documents/Datasets/celeb_faces_A/img_align_celeba/img_align_celeba"
+  dataset_root: "C:/Users/bsele/Documents/datasets/celeb_faces_a_50k/50k"
 
 
 train:

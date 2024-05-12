@@ -36,22 +36,49 @@ class Trainer:
 
     def _train_one_epoch(
         self,
-        model: nn.Module,
+        model_generator: nn.Module,
+        model_discriminator: nn.Module,
         criterion: nn.Module,
-        data_loader: Iterable,
-        optimizer: torch.optim.Optimizer,
-        device: torch.device,
+        data_loader: torch.utils.data.DataLoader,
+        gen_optimizer: torch.optim,
+        disc_optimizer: torch.optim,
+        fixed_noise: torch.Tensor,
+        input_noise_size: int = 100,
+        device: torch.device = torch.device("cpu"),
     ):
-        for steps, (samples, targets) in enumerate(tqdm(data_loader, ascii=" >=")):
+        for steps, (samples) in enumerate(tqdm(data_loader, ascii=" >=")):
             samples = samples.to(device)
-            targets = [
-                {key: value.to(device) for key, value in t.items()} for t in targets
-            ]
 
-            ############ START HERE, DEVELOP MODEL ###############
-            bbox_predictions = model(samples)
+            # Step 1: Train the discriminator: maximize log(D(x)) + log(1 - D(G(z)))
+            disc_optimizer.zero_grad()
+            
+            # Create labels for the real image; by convention, real = 1 and fake = 0
+            real_labels = torch.full((samples.shape[0], 1), 1.0, dtype=torch.float, device=device)
+            
+            # Classify real images and calculate error
+            disc_logits = model_discriminator(samples)
+            real_disc_loss = criterion(disc_logits, real_labels)
+            real_disc_loss.backward() # log(D(x))
 
-            ## TODO: Get GPUs to work
+            # Train the generator with fake images        
+            # Generate fake images with random latent vectors
+            noise = torch.randn(samples.shape[0], input_noise_size, 1, 1, device=device)
+            fake_images = model_generator(noise)
+            
+            # Classify fake images and calculate error
+            fake_labels = torch.full((samples.shape[0], 1), 0.0, dtype=torch.float, device=device)
+            disc_logits = model_discriminator(fake_images)
+            fake_disc_loss = criterion(disc_logits, fake_labels)
+            fake_disc_loss.backward() # log(1 - D(G(z)))
+
+            # Gather the final discriminator loss and update the model
+            total_disc_loss = real_disc_loss + fake_disc_loss
+            disc_optimizer.step()
+            ############### START HEERE, run code and figure out errors, shapes, and compare batch sizes from real and fake ################
+            breakpoint()
+
+
+            # Step 2: Train the
             exit()
 
             ## TODO: understand this and rename variables if needed
@@ -59,21 +86,20 @@ class Trainer:
                 bbox_predictions, targets["bboxes"]
             )
 
-            exit()
-
-    # def train():
 
     def train(
         self,
-        model,
-        criterion,
-        data_loader,
-        optimizer,
-        scheduler,
-        start_epoch=0,
-        epochs=100,
-        ckpt_every=None,
-        device="cpu",
+        model_generator: nn.Module,
+        model_discriminator: nn.Module,
+        criterion: nn.Module,
+        data_loader: torch.utils.data.DataLoader,
+        gen_optimizer: torch.optim,
+        disc_optimizer: torch.optim,
+        input_noise_size: int = 100,
+        start_epoch: int = 0,
+        epochs: int = 100,
+        ckpt_every: int = None,
+        device: torch.device = torch.device("cpu"),
     ):
         """Train a model
 
@@ -82,13 +108,17 @@ class Trainer:
             optimizer:
             ckpt_every:
         """
+        
+        # Initialize fixed noise ONLY to visualize the progression of the generator; 
+        # we still feed the generator random vectors every training step
+        fixed_noise = torch.rand(64, input_noise_size, 1, 1, device=device)
+        
         print("Start training")
         start_time = time.time()
         for epoch in range(start_epoch, epochs):
             train_stats = self._train_one_epoch(
-                model, criterion, data_loader, optimizer, device
+                model_generator, model_discriminator, criterion, data_loader, gen_optimizer, disc_optimizer,fixed_noise, input_noise_size, device
             )
-            scheduler.step()
 
             # Save the model every ckpt_every
             if ckpt_every is not None and (epoch + 1) % ckpt_every == 0:

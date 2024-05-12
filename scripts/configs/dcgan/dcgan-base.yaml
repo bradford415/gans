@@ -7,7 +7,7 @@ gen_name: "dcgan_gen"
 generator:
 
   # Input vector size to the generator
-  input_vec: 100
+  input_vec_ch: 100
 
   # Output channel scalar; this will be elementwise multiplied by output_channel_multiplier;
   # the output channels is determined by out_channel_k*out_channel_multiplier

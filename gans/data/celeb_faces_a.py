@@ -35,7 +35,7 @@ class CelebFacesA(Dataset):
 
         # Preprocess the input data before passing it to the model
         if self._transforms is not None:
-            image, target = self._transforms(_image)
+            _image = self._transforms(_image)
 
         return _image
 
@@ -51,6 +51,7 @@ def _make_celebfacesa_transforms(dataset_split: str) -> T:
         dataset_split: which dataset split to use; `train`, `val`, `test`
 
     """
+    # Normalize data into the range [-1, 1]; specified in DCGAN paper
     normalize = T.Compose([T.ToTensor(), T.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
 
     img_size = (64, 64)

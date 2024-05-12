@@ -85,7 +85,7 @@ def main(base_config_path: str, model_config_path: str):
     model_generator = model_generator.to(device)
     model_discriminator = model_discriminator.to(device)
 
-    model_components = {"backbone": backbone, "num_classes": 80}
+    #model_components = {"backbone": backbone, "num_classes": 80}
 
     gen_criterion = nn.BCEWithLogitsLoss()
     #disc_criterion = nn.B
@@ -102,20 +102,17 @@ def main(base_config_path: str, model_config_path: str):
         weight_decay=train_args["weight_decay"],
     )
 
-    ############## START HERE WITH RANDOM INPUT VECTOR, DECIDE WHERE TO GENERATE IT AT, MAYBE IN THE TRAINER ################################
-    input_vector = torch.randn()
-
     runner = Trainer(output_path=base_config["output_path"])
-
-    ## TODO: Implement checkpointing somewhere around here (or maybe in Trainer)
 
     # Build trainer args used for the training
     trainer_args = {
-        "model": model,
-        "criterion": criterion,
+        "model_generator": model_generator,
+        "model_discriminator": model_discriminator,
+        "criterion": gen_criterion,
         "data_loader": dataloader_train,
-        "optimizer": optimizer,
-        "scheduler": lr_scheduler,
+        "gen_optimizer": gen_optimizer,
+        "disc_optimizer": disc_optimizer,
+        "input_noise_size": model_config["generator"]["input_vec_ch"],
         "device": device,
         **train_args["epochs"],
     }

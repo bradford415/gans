@@ -1,5 +1,4 @@
 from torch import nn
-from torch.nn import Functional as F
 
 
 class ConvTNormRelu(nn.Module):
@@ -14,7 +13,6 @@ class ConvTNormRelu(nn.Module):
         stride: int = 1,
         padding:int = 0,
         conv_bias: bool = False,
-        norm_bias: bool = True,
     ):
         """Initialize the module layers
 
@@ -26,12 +24,12 @@ class ConvTNormRelu(nn.Module):
             stride: Stide of the ConvTranspose
             padding: Padding of the ConvTranspose
             conv_bias: Whether to use a bias in Conv2D; typically this is false if BatchNorm is the following layer
-            bias_norm: Whether to use a bias in BatchNorm2D; typically this is true with a preceeding Conv layer
         """
+        super().__init__()
         self.conv = nn.ConvTranspose2d(
-            in_channels, out_channels=out_channels, kernel_Size=kernel_size, stride=stride, padding=padding, bias=conv_bias
+            in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding, bias=conv_bias
         )
-        self.bn = nn.BatchNorm2d(num_features=bias_channels, bias=norm_bias)
+        self.bn = nn.BatchNorm2d(num_features=bias_channels)
 
     def forward(self, x):
         """Forward pass through the module
@@ -58,7 +56,6 @@ class ConvNormLRelu(nn.Module):
         padding:int = 0,
         leaky_slope: float = 0.2,
         conv_bias: bool = False,
-        norm_bias: bool = True,
     ):
         """Initialize the module layers
 
@@ -71,12 +68,12 @@ class ConvNormLRelu(nn.Module):
             padding: Padding of the ConvTranspose
             leaky_slope: Negative slope of the leaky relu; set to 0.2 in the DCGAN paper
             conv_bias: Whether to use a bias in Conv2D; typically this is false if BatchNorm is the following layer
-            bias_norm: Whether to use a bias in BatchNorm2D; typically this is true with a preceeding Conv layer
         """
+        super().__init__()   
         self.conv = nn.Conv2d(
-            in_channels, out_channels=out_channels, kernel_Size=kernel_size, stride=stride, padding=padding, bias=conv_bias
+            in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding, bias=conv_bias
         )
-        self.bn = nn.BatchNorm2d(num_features=bias_channels, bias=norm_bias)
+        self.bn = nn.BatchNorm2d(num_features=bias_channels)
         self.leaky_relu = nn.LeakyReLU(negative_slope=leaky_slope)
 
     def forward(self, x):
@@ -97,13 +94,17 @@ class DCGenerator(nn.Module):
         """Intialize generator layers
         
         Args:
-            input_vec_ch: Number of channels in the input vector
+            input_vec_ch: Number of channels in the input vector; the input vector will be random noise (B, input_vec_ch, 1, 1)
             out_scaler: Scaler to multiply by to get the num of out channels after each convolution
             out_multiplier: Multiplier for each convolutional layer; will be multiplied by out_scaler
             out_image_ch: Number of channels in the output image; should be set to 3 for RGB images 
         """
+        super().__init__()
+        
         # Multiplier scalar by list to get the number of intermediate output channels
         _out_ch = out_ch_scaler*out_ch_multiplier
+        
+        self.tanh = nn.Tanh()
 
         self.conv_block1 = ConvTNormRelu(in_channels=input_vec_ch, out_channels=_out_ch[0], bias_channels=_out_ch[0], kernel_size=4, stride=1, padding=0)
         self.conv_block2 = ConvTNormRelu(in_channels=_out_ch[0], out_channels=_out_ch[1], bias_channels=_out_ch[1], kernel_size=4, stride=2, padding=1)
@@ -128,19 +129,20 @@ class DCGenerator(nn.Module):
         x = self.conv_trans_out(x)
 
         # Return the data into the range [-1, 1]
-        x = F.Tanh(x)
+        x = self.tanh(x)
         
         return x
 
 
-class DCDiscriminator:
+class DCDiscriminator(nn.Module):
     """Discriminator for Deep Convolutional GAN (DCGAN)"""
     
     def __init__(self, input_image_ch: int = 3, out_ch_scaler: int = 64, out_ch_multiplier: list[int] = [1, 2, 4, 8]):
+        super().__init__()
 
         # Multiplier scalar by list to get the number of intermediate output channels
         _out_ch = out_ch_scaler*out_ch_multiplier
-
+                
         # First layer does not have BatchNorm after according to the paper
         self.conv1 = nn.Conv2d(in_channels=input_image_ch, out_channels=_out_ch[0], kernel_size=4, stride=2, padding=1, bias=False)
         self.leaky_relu =  nn.LeakyReLU(negative_slope=0.2)
@@ -149,7 +151,7 @@ class DCDiscriminator:
         self.conv_block2 = ConvNormLRelu(in_channels=_out_ch[1], out_channels=_out_ch[2], bias_channels=_out_ch[2], kernel_size=4, stride=2, padding=1)
         self.conv_block3 = ConvNormLRelu(in_channels=_out_ch[2], out_channels=_out_ch[3], bias_channels=_out_ch[3], kernel_size=4, stride=2, padding=1)
 
-        self.conv2 = nn.Conv2d(in_channels=_out_ch[3], out_channels=1, kernel=4, stride=1, padding=0, bias=False)
+        self.conv2 = nn.Conv2d(in_channels=_out_ch[3], out_channels=1, kernel_size=4, stride=1, padding=0, bias=False)
 
     def forward(self, x):
         """Forward pass through the Discriminator.
@@ -168,7 +170,8 @@ class DCDiscriminator:
         x = self.conv_block3(x)
 
         x = self.conv2(x)
-        x = self.sigmoid(x)
+        
+        return x
 
 class DCGAN:
     # TODO
