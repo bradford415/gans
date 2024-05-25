@@ -95,12 +95,15 @@ class Trainer:
             # the "real" label when calculating the loss.
             # This works because if the discriminator thinks the fake image is real, it will have a high probablity such as .95
             fake_disc_logits = model_discriminator(fake_images)
-            fake_disc_loss = criterion(fake_disc_logits.view(-1), real_labels)
+            fake_gen_loss = criterion(fake_disc_logits.view(-1), real_labels)
             
             # Because we aren't using .detach anymore, backward() will track the loss from the discriminator all the way back to the generator
-            fake_disc_loss.backward()
+            fake_gen_loss.backward()
+
+            gen_optimizer.step()
 
             ############### START HERE, TRACK LOSSES THEN PLOT AND TRY AND TRAIN #################
+            ############### Also track fixed noise. ##############
 
 
 
