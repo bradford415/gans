@@ -30,6 +30,8 @@ class ConvTNormRelu(nn.Module):
             in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding, bias=conv_bias
         )
         self.bn = nn.BatchNorm2d(num_features=bias_channels)
+        self.relu = nn.ReLU()
+
 
     def forward(self, x):
         """Forward pass through the module
@@ -39,7 +41,7 @@ class ConvTNormRelu(nn.Module):
         """
         x = self.conv(x)
         x = self.bn(x)
-        x = F.ReLU(x)
+        x = self.relu(x)
         return x
 
 
@@ -135,7 +137,12 @@ class DCGenerator(nn.Module):
 
 
 class DCDiscriminator(nn.Module):
-    """Discriminator for Deep Convolutional GAN (DCGAN)"""
+    """Discriminator for Deep Convolutional GAN (DCGAN)
+    
+    We do not need an MLP as the last layer because the final feature map will be a 1x1,
+    therefore, we can use this scalar value as the prediction. The output shape will be (B, 1, 1, 1)
+    so we will need to change the view to match the labels, i.e. output.view(-1)
+    """
     
     def __init__(self, input_image_ch: int = 3, out_ch_scaler: int = 64, out_ch_multiplier: list[int] = [1, 2, 4, 8]):
         super().__init__()
