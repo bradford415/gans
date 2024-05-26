@@ -100,6 +100,7 @@ class Trainer:
             fake_labels = torch.full(
                 (samples.shape[0],), 0.0, dtype=torch.float, device=device
             )
+            #pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cu118
 
             # Notes on .detach():
             #   .detach() is necessary because we only want the discriminator on the computational graph.
@@ -134,8 +135,6 @@ class Trainer:
             # Update optimizer
             gen_optimizer.step()
 
-            ############### START HERE, TRACK LOSSES THEN PLOT AND TRY AND TRAIN #################
-            ############### Also track fixed noise. ##############
             # Output training stats
             if steps % self.log_train_steps - 1 == 0:
                 print(
@@ -143,9 +142,8 @@ class Trainer:
                 )
 
             # Save losses to plot later
-            self.train_stats["disc_losses"].append(total_disc_loss)
-            self.train_stats["gen_losses"].append(fake_gen_loss)
-            break
+            self.train_stats["disc_losses"].append(total_disc_loss.item())
+            self.train_stats["gen_losses"].append(fake_gen_loss.item())
 
         # Generate the same images from fixed_noise at the end of every epoch to visualize the training progress; sigmoid to bound to [0, 1] (should consider putting sigmoid in model itself)
         with torch.no_grad():
@@ -176,16 +174,18 @@ class Trainer:
             optimizer:
             ckpt_every:
         """
+        print(f"Outputs will be saved in {self.output_dir}")
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize fixed noise ONLY to visualize the progression of the generator;
         # we still feed the generator random vectors every training step
-        fixed_noise = torch.rand(64, input_noise_size, 1, 1, device=device)
+        fixed_noise = torch.rand(64, input_noise_size, 1, 1, device=device) # (64, 100, 1, 1)
 
         print("Start training")
         start_time = time.time()
         for epoch in range(start_epoch, epochs):
+            print(f"\nEpoch [{epoch + 1}]/[{epochs}]")
             fixed_images = self._train_one_epoch(
                 model_generator,
                 model_discriminator,
@@ -201,10 +201,10 @@ class Trainer:
             visuals_dir = self.output_dir / "visuals" / "fixed_images"
             visuals_dir.mkdir(parents=True, exist_ok=True)
             plots.visualize_fixed_images(fixed_images, save_path=visuals_dir / f"epoch{epoch:03}.png")
-            exit()
 
             # Save the model every ckpt_every
             if ckpt_every is not None and (epoch + 1) % ckpt_every == 0:
+                print(f"Checkpointing model at epoch: {epoch + 1}. ")
                 ckpt_disc_path = self.output_dir / f"disc_checkpoint{epoch:04}.pt"
                 ckpt_gen_path = self.output_dir / f"gen_checkpoint{epoch:04}.pt"
                 self._save_model(
@@ -219,6 +219,11 @@ class Trainer:
                     epoch,
                     save_path=ckpt_gen_path,
                 )
+
+        # Post training
+        plots.plot_losses(self.train_stats["gen_losses"], self.train_stats["disc_losses"], save_path=self.output_dir / "visuals" / "losses.png")
+
+        print("Training finished. Outputs stored in")
 
     def _save_model(
         self,
@@ -240,27 +245,3 @@ class Trainer:
             },
             save_path,
         )
-
-    @torch.no_grad()
-    def estimate_loss(
-        self, train_data, val_data, model, eval_iters, batch_size, block_size
-    ) -> Dict[str, float]:
-        """Estimate the loss of the train and val split
-
-        Args:
-
-        """
-        out = {}
-        model.eval()
-        all_data = {"train": train_data, "val": val_data}
-        for split in ["train", "val"]:
-            losses = torch.zeros(eval_iters)
-            for k in range(eval_iters):
-                X, Y = Vocab.get_batch(
-                    all_data[split], batch_size, block_size, self.device
-                )
-                logits, loss = model(X, Y)
-                losses[k] = loss.item()
-            out[split] = losses.mean()
-        model.train()
-        return out

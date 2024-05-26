@@ -55,6 +55,8 @@ def main(base_config_path: str, model_config_path: str):
         "shuffle": False,
     }
 
+    #use_cuda = False
+
     if use_cuda:
         print(f"Using {len(base_config['cuda']['gpus'])} GPU(s): ")
         for gpu in range(len(base_config["cuda"]["gpus"])):
@@ -91,7 +93,7 @@ def main(base_config_path: str, model_config_path: str):
 
     # model_components = {"backbone": backbone, "num_classes": 80}
 
-    gen_criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.BCEWithLogitsLoss()
     # disc_criterion = nn.B
 
     # Extract the train arguments from base config
@@ -114,7 +116,7 @@ def main(base_config_path: str, model_config_path: str):
     trainer_args = {
         "model_generator": model_generator,
         "model_discriminator": model_discriminator,
-        "criterion": gen_criterion,
+        "criterion": criterion,
         "data_loader": dataloader_train,
         "gen_optimizer": gen_optimizer,
         "disc_optimizer": disc_optimizer,

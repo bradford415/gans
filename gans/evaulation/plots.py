@@ -22,5 +22,3 @@ def visualize_fixed_images(images_tensor: list[torch.Tensor], save_path):
 
     fig.subplots_adjust(wspace=-0.70, hspace=0.05)
     fig.savefig(save_path, bbox_inches='tight')
-    ############## START HERE, figure out when, how and where to save images
-    exit()
