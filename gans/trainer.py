@@ -5,6 +5,7 @@ from typing import Any, Dict, Iterable, Optional
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch import nn
 from tqdm import tqdm
 
@@ -144,10 +145,12 @@ class Trainer:
             # Save losses to plot later
             self.train_stats["disc_losses"].append(total_disc_loss)
             self.train_stats["gen_losses"].append(fake_gen_loss)
+            break
 
-        # Generate the same images from fixed_noise at the end of every epoch to visualize the training progress
+        # Generate the same images from fixed_noise at the end of every epoch to visualize the training progress; sigmoid to bound to [0, 1] (should consider putting sigmoid in model itself)
         with torch.no_grad():
             fixed_images = model_generator(fixed_noise).detach().cpu()
+            fixed_images = F.sigmoid(fixed_images)
         
         return fixed_images
 
