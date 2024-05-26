@@ -6,7 +6,8 @@ root_dir: "C:/Users/bsele/Documents/Programming/machine-learning/gans"
 
 input_data: "data/input.txt"
 
-output_path: "output"
+# Experiment name for the training run; this will be the output directory name
+exp_name: "development"
 
 # Name of dataset; must be one of the names in the dataset_map dict
 dataset_name: "CelebFacesA"
@@ -32,7 +33,7 @@ train:
 
   scheduler: "step_lr"
 
-  batch_size: 2
+  batch_size: 64
   learning_rate: 0.001 #1e-3
   weight_decay: 0.0001
   lr_drop: 200
@@ -43,7 +44,7 @@ train:
     epochs: 50
 
     # Number of epochs to checkpoint after; use 'null' to turn off checkpointing
-    ckpt_every: 10
+    ckpt_every: 1 #10
 
 validation:
   batch_size: 2
@@ -62,8 +63,11 @@ cuda:
 # Logging parameters
 logging:
 
+  # Number of training steps to print the losses after 
+  log_train_steps: 500
+
   # Estimate loss every eval_iters iterations
-  eval_interval: 100
+  # eval_interval: 100
 
 # Reproducibility information
 reproducibility:

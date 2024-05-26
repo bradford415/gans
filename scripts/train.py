@@ -9,7 +9,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from gans.data.celeb_faces_a import build_CelebFacesA
-from gans.models.dcgan import DCGenerator, DCDiscriminator
+from gans.models.dcgan import DCDiscriminator, DCGenerator
 from gans.trainer import Trainer
 from gans.utils import misc_utils
 
@@ -54,7 +54,7 @@ def main(base_config_path: str, model_config_path: str):
         "batch_size": base_config["validation"]["batch_size"],
         "shuffle": False,
     }
-    
+
     if use_cuda:
         print(f"Using {len(base_config['cuda']['gpus'])} GPU(s): ")
         for gpu in range(len(base_config["cuda"]["gpus"])):
@@ -79,16 +79,20 @@ def main(base_config_path: str, model_config_path: str):
     )
 
     # Initalize model components
-    model_generator = generator_map[model_config["gen_name"]](**model_config["generator"])
-    model_discriminator = discriminator_map[model_config["disc_name"]](**model_config["discriminator"])
+    model_generator = generator_map[model_config["gen_name"]](
+        **model_config["generator"]
+    )
+    model_discriminator = discriminator_map[model_config["disc_name"]](
+        **model_config["discriminator"]
+    )
 
     model_generator = model_generator.to(device)
     model_discriminator = model_discriminator.to(device)
 
-    #model_components = {"backbone": backbone, "num_classes": 80}
+    # model_components = {"backbone": backbone, "num_classes": 80}
 
     gen_criterion = nn.BCEWithLogitsLoss()
-    #disc_criterion = nn.B
+    # disc_criterion = nn.B
 
     # Extract the train arguments from base config
     train_args = {**base_config["train"]}
@@ -102,7 +106,9 @@ def main(base_config_path: str, model_config_path: str):
         weight_decay=train_args["weight_decay"],
     )
 
-    runner = Trainer(output_path=base_config["output_path"])
+    runner = Trainer(
+        exp_name=base_config["exp_name"], **base_config["logging"]
+    )  # TODO: Consider building a nice logger class or some logging method
 
     # Build trainer args used for the training
     trainer_args = {
@@ -127,7 +133,7 @@ def _init_training_objects(
     weight_decay: float = 1e-4,
 ):
     """TODO
-    
+
     Args:
 
     Returns:
