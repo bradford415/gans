@@ -96,9 +96,10 @@ class Trainer:
             fake_images = model_generator(noise)
 
             # Classify fake images and calculate error
-            fake_labels = torch.full(
-                (samples.shape[0],), 0.0, dtype=torch.float, device=device
-            )
+            # fake_labels = torch.full(
+            #     (samples.shape[0],), 0.0, dtype=torch.float, device=device
+            # )
+            real_labels.fill_(0.0)
             # pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cu118
 
             # Notes on .detach():
@@ -108,7 +109,8 @@ class Trainer:
             #   Calling .deatch(), we will only be accumulating gradients from the discriminator. Calling model_generator.<layer_name>.weight.grad will
             #   shown None when using .detach() (this is what we want)
             disc_logits = model_discriminator(fake_images.detach())
-            fake_disc_loss = criterion(disc_logits.view(-1), fake_labels)
+            #fake_disc_loss = criterion(disc_logits.view(-1), fake_labels)
+            fake_disc_loss = criterion(disc_logits.view(-1), real_labels)
             fake_disc_loss.backward()  # log(1 - D(G(z)))
 
             # Gather the final discriminator loss and update the discriminator model
@@ -125,6 +127,10 @@ class Trainer:
             # As a fix, we want to now maximize (log(D(G(x)))) and this can be accomplished by giving the fake images
             # the "real" label when calculating the loss.
             # This works because if the discriminator thinks the fake image is real, it will have a high probablity such as .95
+            # real_labels_2 = torch.full(
+            #     (samples.shape[0],), 1.0, dtype=torch.float, device=device
+            # )
+            real_labels.fill_(1.0)
             fake_disc_logits = model_discriminator(fake_images)
             fake_gen_loss = criterion(fake_disc_logits.view(-1), real_labels)
 
@@ -146,7 +152,7 @@ class Trainer:
 
         # Generate the same images from fixed_noise at the end of every epoch to visualize the training progress; sigmoid to bound to [0, 1] (should consider putting sigmoid in model itself)
         with torch.no_grad():
-            fixed_images = model_generator(fixed_noise).detach().cpu()
+            fixed_images = model_generator(fixed_noise).detach().cpu().numpy()
             #fixed_images = F.sigmoid(fixed_images)
 
         return fixed_images

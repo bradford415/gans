@@ -135,7 +135,7 @@ def _init_training_objects(
     optimizer: str = "sgd",
     learning_rate: float = 1e-4,
     weight_decay: float = 0.0,
-    opt_params: dict | None = None,
+    opt_params: Optional[dict] = None,
 ):
     """TODO
 

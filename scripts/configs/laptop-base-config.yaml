@@ -18,6 +18,7 @@ dataset:
   dataset_root: "C:/Users/bsele/Documents/datasets/celeb_faces_a_50k/50k"
 
 
+# Parameters relating to the training proccess
 train:
 
   # The optimizer to use
@@ -27,26 +28,24 @@ train:
   optimizers:
     # Parameters for the Adam optimizer
     adam:
-      beta1: 0.5
-
+      betas: [0.5, 0.999]
 
   scheduler: "step_lr"
 
-  batch_size: 64
-  learning_rate: 0.001 #1e-3
-  weight_decay: 0.0001
-  lr_drop: 200
+  batch_size: 32
+  learning_rate: 0.0002 
+  weight_decay: 0.0
 
   # Various epochs used during training
   epochs:
     start_epoch: 0
-    epochs: 20
+    epochs: 100
 
-    # Number of epochs to checkpoint after; use 'null' to turn off checkpointing
-    ckpt_every: 1
+    # Number of epochs to checkpo7hint (save model) after; use 'null' to turn off checkpointing
+    ckpt_every: 1 #10
 
 validation:
-  batch_size: 64
+  batch_size: 2
 
 
 cpu:
@@ -64,6 +63,9 @@ logging:
 
   # Number of training steps to print the losses after 
   log_train_steps: 500
+
+  # Estimate loss every eval_iters iterations
+  # eval_interval: 100
 
 # Reproducibility information
 reproducibility:
