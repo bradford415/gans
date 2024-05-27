@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from gans.data.celeb_faces_a import build_CelebFacesA
 from gans.models.dcgan import DCDiscriminator, DCGenerator
 from gans.trainer import Trainer
-from gans.utils import misc_utils
+from gans.utils import misc_utils, model_utils
 
 dataset_map: Dict[str, Any] = {"CelebFacesA": build_CelebFacesA}
 
@@ -88,6 +88,10 @@ def main(base_config_path: str, model_config_path: str):
 
     model_generator = model_generator.to(device)
     model_discriminator = model_discriminator.to(device)
+    
+    # Apply weight intializations as described in the DCGAN paper
+    model_generator.apply(model_utils.weights_init)
+    model_discriminator.apply(model_utils.weights_init)
 
     # model_components = {"backbone": backbone, "num_classes": 80}
 

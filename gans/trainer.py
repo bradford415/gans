@@ -16,7 +16,7 @@ from gans.utils import misc_utils
 class Trainer:
     """Trainer TODO: comment"""
 
-    def __init__(self, exp_name: str, log_train_steps: int = 500):
+    def __init__(self, exp_name: str, log_train_steps: int = 500, plot_fixed_noise: int = 2):
         """Constructor for the Trainer class
 
         Args:
@@ -41,6 +41,7 @@ class Trainer:
 
         # Logging attributes
         self.log_train_steps = log_train_steps
+        self.plot_fixed_noise = plot_fixed_noise
         self.train_stats = {"disc_losses": [], "gen_losses": []}
         self.fixed_images = []
 
@@ -143,7 +144,7 @@ class Trainer:
             # Output training stats
             if steps % self.log_train_steps - 1 == 0:
                 print(
-                    f"\tSteps[{steps-1}/{len(data_loader)}]\tLoss_D: {total_disc_loss:.4f}\tLoss_G: {fake_gen_loss:.4f}\tD(x):"
+                    f"\tSteps [{steps-1}/{len(data_loader)}]\tLoss_D: {total_disc_loss:.4f}\tLoss_G: {fake_gen_loss:.4f}\tD(x):"
                 )
 
             # Save losses to plot later
@@ -180,8 +181,10 @@ class Trainer:
             ckpt_every:
         """
         print(f"Outputs will be saved in {self.output_dir}")
-        # Create output directory
+        # Create output directories
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        visuals_dir = self.output_dir / "visuals" / "fixed_images"
+        visuals_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize fixed noise ONLY to visualize the progression of the generator;
         # we still feed the generator random vectors every training step
@@ -204,15 +207,15 @@ class Trainer:
                 input_noise_size,
                 device,
             )
+            
+            # Visualize fixed noise
+            if  (epoch + 1) % self.plot_fixed_noise == 0 or epoch + 1 == epochs:
+                plots.visualize_fixed_images(
+                    fixed_images, save_path=visuals_dir / f"epoch{epoch+1:03}.png"
+                )
 
-            visuals_dir = self.output_dir / "visuals" / "fixed_images"
-            visuals_dir.mkdir(parents=True, exist_ok=True)
-            plots.visualize_fixed_images(
-                fixed_images, save_path=visuals_dir / f"epoch{epoch:03}.png"
-            )
-
-            # Save the model every ckpt_every
-            if ckpt_every is not None and (epoch + 1) % ckpt_every == 0:
+            # Save the model every ckpt_every and on the last epoch
+            if ckpt_every is not None and (epoch + 1) % ckpt_every == 0 or epoch + 1 == epochs:
                 print(f"Checkpointing model at epoch: {epoch + 1}. ")
                 ckpt_disc_path = self.output_dir / f"disc_checkpoint{epoch:04}.pt"
                 ckpt_gen_path = self.output_dir / f"gen_checkpoint{epoch:04}.pt"

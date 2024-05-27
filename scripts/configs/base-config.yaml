@@ -40,10 +40,10 @@ train:
   # Various epochs used during training
   epochs:
     start_epoch: 0
-    epochs: 5
+    epochs: 30
 
     # Number of epochs to checkpoint (save model) after; use 'null' to turn off checkpointing
-    ckpt_every: 1 #10
+    ckpt_every: 5 #10
 
 validation:
   batch_size: 2
@@ -64,6 +64,10 @@ logging:
 
   # Number of training steps to print the losses after 
   log_train_steps: 500
+
+  # Number of epochs to visualize the fixed noise samples after
+  plot_fixed_noise: 2
+
 
   # Estimate loss every eval_iters iterations
   # eval_interval: 100

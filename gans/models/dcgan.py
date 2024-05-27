@@ -77,7 +77,7 @@ class ConvNormLRelu(nn.Module):
         """
         super().__init__()
         self.conv = nn.Conv2d(
-            in_channels,
+            in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
             stride=stride,
@@ -120,10 +120,9 @@ class DCGenerator(nn.Module):
         super().__init__()
 
         # Multiplier scalar by list to get the number of intermediate output channels
-        _out_ch = out_ch_scaler * out_ch_multiplier
+        _out_ch = [out_ch_scaler * multiplier for multiplier in out_ch_multiplier]
 
         self.tanh = nn.Tanh()
-
         self.conv_block1 = ConvTNormRelu(
             in_channels=input_vec_ch,
             out_channels=_out_ch[0],
@@ -202,8 +201,8 @@ class DCDiscriminator(nn.Module):
     ):
         super().__init__()
 
-        # Multiplier scalar by list to get the number of intermediate output channels
-        _out_ch = out_ch_scaler * out_ch_multiplier
+        # Multiplier scalar by list to get the number of intermediate output channels; can't broadcast in pure python
+        _out_ch = [out_ch_scaler * multiplier for multiplier in out_ch_multiplier]
 
         # First layer does not have BatchNorm after according to the paper
         self.conv1 = nn.Conv2d(
