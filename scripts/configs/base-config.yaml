@@ -18,7 +18,7 @@ dataset:
   # Path to the root of the dataset
   dataset_root: "C:/Users/bsele/Documents/Datasets/celeb_faces_A/img_align_celeba/img_align_celeba"
 
-
+# Parameters relating to the training proccess
 train:
 
   # The optimizer to use
@@ -28,22 +28,21 @@ train:
   optimizers:
     # Parameters for the Adam optimizer
     adam:
-      beta1: 0.5
+      betas: [0.5, 0.999]
 
 
   scheduler: "step_lr"
 
-  batch_size: 2
-  learning_rate: 0.001 #1e-3
-  weight_decay: 0.0001
-  lr_drop: 200
+  batch_size: 128
+  learning_rate: 0.0002 
+  weight_decay: 0.0
 
   # Various epochs used during training
   epochs:
     start_epoch: 0
-    epochs: 50
+    epochs: 5
 
-    # Number of epochs to checkpoint after; use 'null' to turn off checkpointing
+    # Number of epochs to checkpoint (save model) after; use 'null' to turn off checkpointing
     ckpt_every: 1 #10
 
 validation:

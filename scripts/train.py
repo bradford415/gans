@@ -1,6 +1,6 @@
 # Usage: python scripts/train.py scripts/configs/base-config.yaml scripts/configs/dcgan/model-base.yaml
 from pathlib import Path
-from typing import Any, Dict, Iterable, Tuple
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 import torch
 import yaml
@@ -55,8 +55,6 @@ def main(base_config_path: str, model_config_path: str):
         "shuffle": False,
     }
 
-    #use_cuda = False
-
     if use_cuda:
         print(f"Using {len(base_config['cuda']['gpus'])} GPU(s): ")
         for gpu in range(len(base_config["cuda"]["gpus"])):
@@ -93,19 +91,23 @@ def main(base_config_path: str, model_config_path: str):
 
     # model_components = {"backbone": backbone, "num_classes": 80}
 
-    criterion = nn.BCEWithLogitsLoss()
-    # disc_criterion = nn.B
+    criterion = nn.BCELoss()
 
     # Extract the train arguments from base config
     train_args = {**base_config["train"]}
 
     # Initialize training objects
+    opt_name = train_args["optimizer_name"]
+    optimizer_args = {
+        "optimizer": opt_name,
+        "learning_rate": train_args["learning_rate"],
+        "weight_decay": train_args["weight_decay"],
+        "opt_params": train_args["optimizers"][opt_name],
+    }
     gen_optimizer, disc_optimizer = _init_training_objects(
         gen_params=model_generator.parameters(),
         disc_params=model_discriminator.parameters(),
-        optimizer=train_args["optimizer_name"],
-        learning_rate=train_args["learning_rate"],
-        weight_decay=train_args["weight_decay"],
+        **optimizer_args,
     )
 
     runner = Trainer(
@@ -132,7 +134,8 @@ def _init_training_objects(
     disc_params: Iterable,
     optimizer: str = "sgd",
     learning_rate: float = 1e-4,
-    weight_decay: float = 1e-4,
+    weight_decay: float = 0.0,
+    opt_params: dict | None = None,
 ):
     """TODO
 
@@ -142,11 +145,11 @@ def _init_training_objects(
 
     """
     gen_optimizer = optimizer_map[optimizer](
-        gen_params, lr=learning_rate, weight_decay=weight_decay
+        gen_params, lr=learning_rate, weight_decay=weight_decay, **opt_params
     )
 
     disc_optimizer = optimizer_map[optimizer](
-        disc_params, lr=learning_rate, weight_decay=weight_decay
+        disc_params, lr=learning_rate, weight_decay=weight_decay, **opt_params
     )
 
     return gen_optimizer, disc_optimizer

@@ -13,7 +13,6 @@ from gans.evaulation import plots
 from gans.utils import misc_utils
 
 
-
 class Trainer:
     """Trainer TODO: comment"""
 
@@ -100,7 +99,7 @@ class Trainer:
             fake_labels = torch.full(
                 (samples.shape[0],), 0.0, dtype=torch.float, device=device
             )
-            #pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cu118
+            # pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cu118
 
             # Notes on .detach():
             #   .detach() is necessary because we only want the discriminator on the computational graph.
@@ -138,7 +137,7 @@ class Trainer:
             # Output training stats
             if steps % self.log_train_steps - 1 == 0:
                 print(
-                    f"[{steps-1}/{len(data_loader)}]\tLoss_D: {total_disc_loss:.4f}\tLoss_G: {fake_gen_loss:.4f}\tD(x):"
+                    f"\tSteps[{steps-1}/{len(data_loader)}]\tLoss_D: {total_disc_loss:.4f}\tLoss_G: {fake_gen_loss:.4f}\tD(x):"
                 )
 
             # Save losses to plot later
@@ -148,8 +147,8 @@ class Trainer:
         # Generate the same images from fixed_noise at the end of every epoch to visualize the training progress; sigmoid to bound to [0, 1] (should consider putting sigmoid in model itself)
         with torch.no_grad():
             fixed_images = model_generator(fixed_noise).detach().cpu()
-            fixed_images = F.sigmoid(fixed_images)
-        
+            #fixed_images = F.sigmoid(fixed_images)
+
         return fixed_images
 
     def train(
@@ -180,12 +179,14 @@ class Trainer:
 
         # Initialize fixed noise ONLY to visualize the progression of the generator;
         # we still feed the generator random vectors every training step
-        fixed_noise = torch.rand(64, input_noise_size, 1, 1, device=device) # (64, 100, 1, 1)
+        fixed_noise = torch.rand(
+            64, input_noise_size, 1, 1, device=device
+        )  # (64, 100, 1, 1)
 
         print("Start training")
         start_time = time.time()
         for epoch in range(start_epoch, epochs):
-            print(f"\nEpoch [{epoch + 1}]/[{epochs}]")
+            print(f"\nEpoch {epoch + 1}/{epochs}:")
             fixed_images = self._train_one_epoch(
                 model_generator,
                 model_discriminator,
@@ -197,10 +198,12 @@ class Trainer:
                 input_noise_size,
                 device,
             )
-            
+
             visuals_dir = self.output_dir / "visuals" / "fixed_images"
             visuals_dir.mkdir(parents=True, exist_ok=True)
-            plots.visualize_fixed_images(fixed_images, save_path=visuals_dir / f"epoch{epoch:03}.png")
+            plots.visualize_fixed_images(
+                fixed_images, save_path=visuals_dir / f"epoch{epoch:03}.png"
+            )
 
             # Save the model every ckpt_every
             if ckpt_every is not None and (epoch + 1) % ckpt_every == 0:
@@ -221,7 +224,11 @@ class Trainer:
                 )
 
         # Post training
-        plots.plot_losses(self.train_stats["gen_losses"], self.train_stats["disc_losses"], save_path=self.output_dir / "visuals" / "losses.png")
+        plots.plot_losses(
+            self.train_stats["gen_losses"],
+            self.train_stats["disc_losses"],
+            save_path=self.output_dir / "visuals" / "losses.png",
+        )
 
         print("Training finished. Outputs stored in")
 

@@ -249,6 +249,7 @@ class DCDiscriminator(nn.Module):
             padding=0,
             bias=False,
         )
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         """Forward pass through the Discriminator.
@@ -267,8 +268,8 @@ class DCDiscriminator(nn.Module):
         x = self.conv_block3(x)
 
         x = self.conv2(x)
-
-        return x
+        x = self.sigmoid(x)
+        return x 
 
 
 class DCGAN:
