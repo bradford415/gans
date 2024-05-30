@@ -1,4 +1,4 @@
-# Gans
+# GANs
 Modular GAN framework, mostly my own learning.
 
 ## Setup
@@ -11,6 +11,7 @@ For linux run:
 make create
 ```
 
+# Models
 ## DCGAN
 Deep convolutional GAN implementation
 
